@@ -1,11 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import PanelCard from '../components/ui/PanelCard';
 import ProductCard from '../components/ui/ProductCard';
+import {
+    clearAccessToken,
+    clearAuthUserEmail,
+    formatDisplayName,
+    getAuthHeaders,
+    getAccessToken,
+    getAuthUserEmail,
+} from '../lib/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -15,6 +24,7 @@ type ApiProduct = {
     description: string;
     category: string;
     price: number | string;
+    imageUrl?: string | null;
     location?: string | null;
     createdBy?: {
         username?: string;
@@ -38,12 +48,16 @@ const tabToCategory: Record<string, string> = {
 };
 
 export default function Home() {
+    const router = useRouter();
     const [products, setProducts] = useState<ApiProduct[]>([]);
     const [activeCategory, setActiveCategory] = useState('all');
     const [activeMenuItem, setActiveMenuItem] = useState('Posts');
     const [activeFeedTab, setActiveFeedTab] = useState('All');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const isAuthenticated = typeof window !== 'undefined' && Boolean(getAccessToken());
+    const currentUserName =
+        typeof window === 'undefined' || !isAuthenticated ? 'Usuario' : formatDisplayName(getAuthUserEmail());
 
     const logInteraction = (element: string, payload?: Record<string, unknown>) => {
         console.info(`[UI_INTERACTION] ${element}`, payload ?? {});
@@ -55,13 +69,19 @@ export default function Home() {
             setError('');
 
             try {
-                const token = localStorage.getItem('accessToken');
                 const categoryQuery = activeCategory === 'all' ? '' : `?category=${encodeURIComponent(activeCategory)}`;
                 const response = await fetch(`${API_BASE_URL}/product${categoryQuery}`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                    headers: getAuthHeaders(),
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        clearAccessToken();
+                        clearAuthUserEmail();
+                        setError('Sesion expirada. Puedes seguir navegando o iniciar sesion nuevamente.');
+                        setProducts([]);
+                        return;
+                    }
                     throw new Error('No fue posible cargar productos desde backend.');
                 }
 
@@ -84,10 +104,19 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-[#f3f3f3] text-gray-900">
             <Navbar
-                mode="authenticated"
-                userName="Samuel"
+                mode={isAuthenticated ? 'authenticated' : 'guest'}
+                userName={currentUserName}
                 onMenuClick={() => logInteraction('navbar_menu_click')}
-                onLogout={() => logInteraction('navbar_logout_skeleton_click')}
+                onLogout={
+                    isAuthenticated
+                        ? () => {
+                              clearAccessToken();
+                              clearAuthUserEmail();
+                              logInteraction('navbar_logout_click');
+                              router.push('/');
+                          }
+                        : undefined
+                }
             />
 
             <main className="mx-auto grid w-full max-w-[1600px] grid-cols-1 lg:grid-cols-[250px_1fr_270px]">
@@ -195,6 +224,7 @@ export default function Home() {
                                     description={product.description}
                                     category={product.category}
                                     price={Number(product.price)}
+                                    imageUrl={product.imageUrl ?? undefined}
                                     location={product.location ?? undefined}
                                     sellerName={product.createdBy?.username}
                                     onClick={(id) => logInteraction('product_card_click', { productId: id })}

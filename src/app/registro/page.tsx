@@ -46,7 +46,7 @@ export default function RegistroPage() {
         };
 
         try {
-            const response = await fetch(${API_BASE_URL}/users, {
+            const response = await fetch(`${API_BASE_URL}/users`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -74,6 +74,14 @@ export default function RegistroPage() {
                 JSON.stringify({
                     username: normalizedUsername,
                     email: normalizedEmail,
+                }),
+            );
+
+            sessionStorage.setItem(
+                'onboardingCredentials',
+                JSON.stringify({
+                    email: normalizedEmail,
+                    password,
                 }),
             );
 
@@ -151,7 +159,7 @@ export default function RegistroPage() {
                                 placeholder="Enter your password"
                                 required
                                 minLength={8}
-                                pattern="^(?=.[A-Za-z])(?=.\d)(?=.*[^A-Za-z\d]).{8,}$"
+                                pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
                                 value={password}
                                 onChange={(event) => setPassword(event.target.value)}
                                 helperText="It must be a combination of minimum 8 letters, numbers, and symbols."

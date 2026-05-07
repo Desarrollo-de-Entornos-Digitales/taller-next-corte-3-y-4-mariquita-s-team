@@ -9,6 +9,9 @@ import AuthCard from '../../../components/ui/AuthCard';
 import Button from '../../../components/ui/Button';
 import RoleOptionCard from '../../../components/ui/RoleOptionCard';
 import SelectableChip from '../../../components/ui/SelectableChip';
+import { setAccessToken, setAuthUserEmail, setAuthUserId } from '../../../lib/auth';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
 const roleOptions = [
     {
@@ -39,6 +42,22 @@ type OnboardingDraft = {
     email?: string;
 };
 
+type OnboardingCredentials = {
+    email: string;
+    password: string;
+};
+
+type AuthLoginResponse = {
+    access_token?: string;
+    accessToken?: string;
+    token?: string;
+    user?: {
+        id?: number;
+        email?: string;
+    };
+    message?: string | string[];
+};
+
 export default function ProfileOnboardingPage() {
     const router = useRouter();
     const [selectedRole, setSelectedRole] = useState<(typeof roleOptions)[number]['id']>('buyer');
@@ -66,7 +85,7 @@ export default function ProfileOnboardingPage() {
             return 'This information will help us personalize your experience.';
         }
 
-        return Setting up profile for ${draft.username ?? draft.email};
+        return `Setting up profile for ${draft.username ?? draft.email}`;
     }, [draft.email, draft.username]);
 
     const toggleInterest = (interest: string) => {
@@ -75,15 +94,96 @@ export default function ProfileOnboardingPage() {
         );
     };
 
-    const handleContinue = () => {
-        // Placeholder: for now this remains as UI-only preferences.
-        console.info('[ONBOARDING_PREFERENCES]', {
-            selectedRole,
-            selectedInterests,
-            selectedRange,
-            draft,
+    const handleContinue = async (): Promise<void> => {
+        const credentialsRaw = sessionStorage.getItem('onboardingCredentials');
+        if (!credentialsRaw) {
+            router.push('/login');
+            return;
+        }
+
+        let credentials: OnboardingCredentials | null = null;
+        try {
+            const parsed = JSON.parse(credentialsRaw) as unknown;
+            if (
+                typeof parsed === 'object' &&
+                parsed !== null &&
+                'email' in parsed &&
+                'password' in parsed &&
+                typeof (parsed as { email: unknown }).email === 'string' &&
+                typeof (parsed as { password: unknown }).password === 'string'
+            ) {
+                credentials = {
+                    email: (parsed as { email: string }).email,
+                    password: (parsed as { password: string }).password,
+                };
+            }
+        } catch {
+            credentials = null;
+        }
+
+        if (!credentials) {
+            router.push('/login');
+            return;
+        }
+
+        const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: credentials.email, password: credentials.password }),
         });
-        router.push('/login');
+
+        const loginBody = (await loginResponse.json().catch(() => null)) as AuthLoginResponse | null;
+        if (!loginResponse.ok) {
+            const backendMessage = loginBody?.message;
+            const message =
+                typeof backendMessage === 'string'
+                    ? backendMessage
+                    : Array.isArray(backendMessage)
+                      ? backendMessage.join(', ')
+                      : 'No fue posible iniciar sesion para finalizar onboarding.';
+            throw new Error(message);
+        }
+
+        const accessToken = loginBody?.access_token ?? loginBody?.accessToken ?? loginBody?.token;
+        const userId = loginBody?.user?.id;
+        const userEmail = loginBody?.user?.email ?? credentials.email;
+
+        if (!accessToken || !userId) {
+            throw new Error('No fue posible finalizar onboarding: falta token o usuario.');
+        }
+
+        setAccessToken(accessToken);
+        setAuthUserId(userId);
+        setAuthUserEmail(userEmail);
+
+        // roleId mapping (seed default): 2 = seller, 3 = buyer
+        const roleId = selectedRole === 'seller' ? 2 : 3;
+
+        const patchResponse = await fetch(`${API_BASE_URL}/users/${userId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ roleId }),
+        });
+
+        if (!patchResponse.ok) {
+            const patchBody = (await patchResponse.json().catch(() => null)) as { message?: string | string[] } | null;
+            const backendMessage = patchBody?.message;
+            const message =
+                typeof backendMessage === 'string'
+                    ? backendMessage
+                    : Array.isArray(backendMessage)
+                      ? backendMessage.join(', ')
+                      : 'No fue posible actualizar el rol del usuario.';
+            throw new Error(message);
+        }
+
+        sessionStorage.removeItem('onboardingCredentials');
+        sessionStorage.removeItem('onboardingDraft');
+
+        router.push('/');
     };
 
     return (
@@ -174,7 +274,7 @@ export default function ProfileOnboardingPage() {
                                 >
                                     Go Back
                                 </Button>
-                                <Button type="button" className="w-auto px-8" onClick={handleContinue}>
+                                <Button type="button" className="w-auto px-8" onClick={() => void handleContinue()}>
                                     Continue
                                 </Button>
                             </div>

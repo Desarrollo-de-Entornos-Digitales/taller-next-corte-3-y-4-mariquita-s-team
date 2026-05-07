@@ -1,9 +1,12 @@
+import Image from 'next/image';
+
 type ProductCardProps = {
     id: number;
     title: string;
     description: string;
     category: string;
     price: number;
+    imageUrl?: string;
     location?: string;
     sellerName?: string;
     onClick?: (id: number) => void;
@@ -23,6 +26,7 @@ export default function ProductCard({
     description,
     category,
     price,
+    imageUrl,
     location,
     sellerName,
     onClick,
@@ -32,8 +36,14 @@ export default function ProductCard({
             className="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:shadow-md"
             onClick={() => onClick?.(id)}
         >
-            <div className="flex h-28 items-center justify-center bg-[#d1d5db]">
-                <div className="h-11 w-11 border-4 border-[#e5e7eb]" />
+            <div className="relative h-36 bg-[#d1d5db]">
+                {imageUrl ? (
+                    <Image src={imageUrl} alt={title} fill className="object-cover" />
+                ) : (
+                    <div className="flex h-full items-center justify-center">
+                        <div className="h-11 w-11 border-4 border-[#e5e7eb]" />
+                    </div>
+                )}
             </div>
             <div className="p-3">
                 <p className="text-xs font-semibold text-gray-500">Category</p>

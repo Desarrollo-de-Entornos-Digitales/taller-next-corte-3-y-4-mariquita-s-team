@@ -4,12 +4,14 @@ import { useState } from 'react';
 import type { ComponentProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 import Footer from '../../components/Footer';
 import AuthCard from '../../components/ui/AuthCard';
 import Button from '../../components/ui/Button';
 import PasswordField from '../../components/ui/PasswordField';
 import TextField from '../../components/ui/TextField';
+import { clearRememberEmail, setAccessToken, setAuthUserEmail, setAuthUserId, setRememberEmail } from '../../lib/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -20,6 +22,12 @@ type LoginPayload = {
 
 type LoginResponse = {
     accessToken?: string;
+    access_token?: string;
+    token?: string;
+    user?: {
+        id?: number;
+        email?: string;
+    };
     refreshToken?: string;
     message?: string | string[];
 };
@@ -41,8 +49,8 @@ async function loginRequest(payload: LoginPayload): Promise<LoginResponse> {
             typeof backendMessage === 'string'
                 ? backendMessage
                 : Array.isArray(backendMessage)
-                    ? backendMessage.join(', ')
-                    : 'Could not sign in with the provided credentials.';
+                  ? backendMessage.join(', ')
+                  : 'Could not sign in with the provided credentials.';
         throw new Error(message);
     }
 
@@ -50,6 +58,7 @@ async function loginRequest(payload: LoginPayload): Promise<LoginResponse> {
 }
 
 export default function LoginPage() {
+    const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -68,18 +77,24 @@ export default function LoginPage() {
                 password,
             });
 
-            // JWT integration point: replace this with secure token handling strategy.
-            if (response.accessToken) {
-                localStorage.setItem('accessToken', response.accessToken);
-                setSuccessMessage('Login successful. JWT received and ready for next integration step.');
-            } else {
+            const accessToken = response.accessToken ?? response.access_token ?? response.token;
+
+            if (accessToken) {
+                setAccessToken(accessToken);
+                setAuthUserEmail(response.user?.email ?? email.trim());
+                if (response.user?.id) {
+                    setAuthUserId(response.user.id);
+                }
                 setSuccessMessage('Login successful.');
+                router.push('/');
+            } else {
+                throw new Error('Login response does not include access token.');
             }
 
             if (rememberMe) {
-                localStorage.setItem('rememberEmail', email.trim());
+                setRememberEmail(email.trim());
             } else {
-                localStorage.removeItem('rememberEmail');
+                clearRememberEmail();
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : 'Unexpected error during sign in.';
@@ -169,6 +184,13 @@ export default function LoginPage() {
                                 No account yet?{' '}
                                 <Link href="/registro" className="font-medium text-green-700 hover:text-green-800">
                                     Sign Up
+                                </Link>
+                            </p>
+
+                            <p className="text-center text-sm text-gray-600">
+                                Prefer to browse first?{' '}
+                                <Link href="/" className="font-medium text-green-700 hover:text-green-800">
+                                    Go to feed
                                 </Link>
                             </p>
                         </form>
