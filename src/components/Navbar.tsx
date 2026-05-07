@@ -5,10 +5,17 @@ type NavbarProps = {
     mode?: 'guest' | 'authenticated';
     userName?: string;
     onMenuClick?: () => void;
+    onCartClick?: () => void;
     onLogout?: () => void;
 };
 
-export default function Navbar({ mode = 'guest', userName = 'Usuario', onMenuClick, onLogout }: NavbarProps) {
+export default function Navbar({
+    mode = 'guest',
+    userName = 'Usuario',
+    onMenuClick,
+    onCartClick,
+    onLogout,
+}: NavbarProps) {
     return (
         <header className="border-b border-gray-200 bg-white">
             <div className="mx-auto flex w-full max-w-[1600px] items-center gap-4 px-4 py-4 md:px-6">
@@ -30,6 +37,14 @@ export default function Navbar({ mode = 'guest', userName = 'Usuario', onMenuCli
 
                 {mode === 'authenticated' ? (
                     <div className="ml-auto flex items-center gap-3 text-sm">
+                        <button
+                            type="button"
+                            className="rounded border border-gray-300 p-2 text-gray-600 hover:bg-gray-50"
+                            onClick={onCartClick}
+                            aria-label="Shopping cart"
+                        >
+                            <Image src="/icons/Shopping%20cart.png" alt="Shopping cart" width={18} height={18} />
+                        </button>
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 font-semibold text-green-700">
                             {userName.charAt(0).toUpperCase()}
                         </div>
@@ -44,6 +59,14 @@ export default function Navbar({ mode = 'guest', userName = 'Usuario', onMenuCli
                     </div>
                 ) : (
                     <div className="ml-auto flex items-center gap-2 text-sm">
+                        <button
+                            type="button"
+                            className="rounded border border-gray-300 p-2 text-gray-600 hover:bg-gray-50"
+                            onClick={onCartClick}
+                            aria-label="Shopping cart"
+                        >
+                            <Image src="/icons/Shopping%20cart.png" alt="Shopping cart" width={18} height={18} />
+                        </button>
                         <Link href="/login" className="rounded border border-gray-300 px-4 py-1.5 text-gray-600">
                             Log in
                         </Link>
