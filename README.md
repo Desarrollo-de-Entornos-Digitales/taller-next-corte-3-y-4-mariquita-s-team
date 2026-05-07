@@ -99,3 +99,7 @@ En el backend, la autorizacion se sustenta en guards JWT y validacion de permiso
 ### Gestion del estado
 
 La gestion del estado se implemento principalmente con React Hooks para controlar sesion, carga de productos, filtros, paginacion, estados de carga y manejo de errores. Como estrategia de persistencia, se utiliza `localStorage` para datos de sesion que deben conservarse entre recargas (por ejemplo, token e identidad basica), y `sessionStorage` para datos transitorios del onboarding que solo son necesarios durante el flujo de registro.
+
+### Link de Figma
+
+https://www.figma.com/design/KYcAlG4jawYAoQsK32ZjbS/Mockups?node-id=0-1&p=f&t=Yd4iTphAHFURy7Bk-0
