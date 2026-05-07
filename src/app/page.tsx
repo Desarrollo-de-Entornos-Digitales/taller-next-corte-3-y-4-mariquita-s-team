@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import Footer from '../components/Footer';
@@ -41,11 +42,28 @@ const categories = [
 const feedTabs = ['All', 'Livestock', 'Agriculture', 'Poultry farming', 'Supplies and equipment', 'Other products'];
 const quickPostOptions = ['Livestock', 'Agriculture', 'Poultry farming', 'Supplies and equipment', 'Other products'];
 const leftMenu = ['Home', 'Posts', 'My posts', 'Messages', 'Favorites', 'Notifications', 'Dash board'];
+const leftMenuIcons: Record<string, string> = {
+    Home: '/icons/home.png',
+    Posts: '/icons/posts.png',
+    'My posts': '/icons/my%20posts.png',
+    Messages: '/icons/messages.png',
+    Favorites: '/icons/favorites.png',
+    Notifications: '/icons/notifications.png',
+    'Dash board': '/icons/dashboard.png',
+};
+const optionIcons: Record<string, string> = {
+    Livestock: '/icons/Livestock.png',
+    Agriculture: '/icons/Agriculture.png',
+    'Poultry farming': '/icons/Poultry%20farming.png',
+    'Supplies and equipment': '/icons/Supplies%20and%20equipment.png',
+    'Other products': '/icons/Other%20products.png',
+};
 const tabToCategory: Record<string, string> = {
     All: 'all',
     Livestock: 'livestock',
     Agriculture: 'crop',
 };
+const PAGE_SIZE = 8;
 
 export default function Home() {
     const router = useRouter();
@@ -55,6 +73,8 @@ export default function Home() {
     const [activeFeedTab, setActiveFeedTab] = useState('All');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
     const isAuthenticated = typeof window !== 'undefined' && Boolean(getAccessToken());
     const currentUserName =
         typeof window === 'undefined' || !isAuthenticated ? 'Usuario' : formatDisplayName(getAuthUserEmail());
@@ -69,8 +89,14 @@ export default function Home() {
             setError('');
 
             try {
-                const categoryQuery = activeCategory === 'all' ? '' : `?category=${encodeURIComponent(activeCategory)}`;
-                const response = await fetch(`${API_BASE_URL}/product${categoryQuery}`, {
+                const params = new URLSearchParams();
+                if (activeCategory !== 'all') {
+                    params.set('category', activeCategory);
+                }
+                params.set('limit', String(PAGE_SIZE));
+                params.set('offset', String((page - 1) * PAGE_SIZE));
+
+                const response = await fetch(`${API_BASE_URL}/product?${params.toString()}`, {
                     headers: getAuthHeaders(),
                 });
 
@@ -87,19 +113,19 @@ export default function Home() {
 
                 const body = (await response.json()) as ApiProduct[];
                 setProducts(body);
+                setHasMore(body.length === PAGE_SIZE);
             } catch (fetchError) {
                 const message = fetchError instanceof Error ? fetchError.message : 'Error cargando productos.';
                 setError(message);
                 setProducts([]);
+                setHasMore(false);
             } finally {
                 setLoading(false);
             }
         };
 
         void fetchProducts();
-    }, [activeCategory]);
-
-    const featuredProducts = useMemo(() => products.slice(0, 8), [products]);
+    }, [activeCategory, page]);
 
     return (
         <div className="min-h-screen bg-[#f3f3f3] text-gray-900">
@@ -107,6 +133,7 @@ export default function Home() {
                 mode={isAuthenticated ? 'authenticated' : 'guest'}
                 userName={currentUserName}
                 onMenuClick={() => logInteraction('navbar_menu_click')}
+                onCartClick={() => logInteraction('navbar_cart_click')}
                 onLogout={
                     isAuthenticated
                         ? () => {
@@ -131,12 +158,15 @@ export default function Home() {
                             >
                                 <button
                                     type="button"
-                                    className="w-full text-left"
+                                    className="flex w-full items-center gap-2 text-left"
                                     onClick={() => {
                                         setActiveMenuItem(item);
                                         logInteraction('left_menu_click', { item });
                                     }}
                                 >
+                                    {leftMenuIcons[item] ? (
+                                        <Image src={leftMenuIcons[item]} alt={item} width={16} height={16} />
+                                    ) : null}
                                     {item}
                                 </button>
                             </li>
@@ -155,7 +185,10 @@ export default function Home() {
                                             ? 'bg-green-100 font-semibold text-green-800'
                                             : 'text-gray-700 hover:bg-gray-100'
                                     }`}
-                                    onClick={() => setActiveCategory(item.value)}
+                                    onClick={() => {
+                                        setActiveCategory(item.value);
+                                        setPage(1);
+                                    }}
                                 >
                                     {item.label}
                                 </button>
@@ -196,6 +229,7 @@ export default function Home() {
                                     const mappedCategory = tabToCategory[tab];
                                     if (mappedCategory) {
                                         setActiveCategory(mappedCategory);
+                                        setPage(1);
                                     }
                                     logInteraction('feed_tab_click', { tab, mappedCategory: mappedCategory ?? null });
                                 }}
@@ -208,28 +242,49 @@ export default function Home() {
                     {loading && <p className="rounded-lg bg-white p-3 text-sm text-gray-700">Cargando productos...</p>}
                     {error && <p className="rounded-lg bg-rose-50 p-3 text-sm text-rose-600">{error}</p>}
 
-                    {!loading && !error && featuredProducts.length === 0 && (
+                    {!loading && !error && products.length === 0 && (
                         <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
                             No hay productos para esta categoria en este momento.
                         </p>
                     )}
 
-                    {!loading && featuredProducts.length > 0 && (
-                        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                            {featuredProducts.map((product) => (
-                                <ProductCard
-                                    key={product.id}
-                                    id={product.id}
-                                    title={product.title}
-                                    description={product.description}
-                                    category={product.category}
-                                    price={Number(product.price)}
-                                    imageUrl={product.imageUrl ?? undefined}
-                                    location={product.location ?? undefined}
-                                    sellerName={product.createdBy?.username}
-                                    onClick={(id) => logInteraction('product_card_click', { productId: id })}
-                                />
-                            ))}
+                    {!loading && products.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                {products.map((product) => (
+                                    <ProductCard
+                                        key={product.id}
+                                        id={product.id}
+                                        title={product.title}
+                                        description={product.description}
+                                        category={product.category}
+                                        price={Number(product.price)}
+                                        imageUrl={product.imageUrl ?? undefined}
+                                        location={product.location ?? undefined}
+                                        sellerName={product.createdBy?.username}
+                                        onClick={(id) => logInteraction('product_card_click', { productId: id })}
+                                    />
+                                ))}
+                            </div>
+                            <div className="flex items-center justify-between rounded-lg bg-white p-3">
+                                <button
+                                    type="button"
+                                    className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                                    disabled={page === 1 || loading}
+                                >
+                                    Anterior
+                                </button>
+                                <p className="text-sm text-gray-600">Pagina {page}</p>
+                                <button
+                                    type="button"
+                                    className="rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    onClick={() => setPage((prev) => prev + 1)}
+                                    disabled={!hasMore || loading}
+                                >
+                                    Siguiente
+                                </button>
+                            </div>
                         </div>
                     )}
                 </section>
@@ -249,9 +304,12 @@ export default function Home() {
                                 <li key={option}>
                                     <button
                                         type="button"
-                                        className="text-left hover:text-[#2f7d4d]"
+                                        className="flex items-center gap-2 text-left hover:text-[#2f7d4d]"
                                         onClick={() => logInteraction('quick_post_option_click', { option })}
                                     >
+                                        {optionIcons[option] ? (
+                                            <Image src={optionIcons[option]} alt={option} width={14} height={14} />
+                                        ) : null}
                                         {option}
                                     </button>
                                 </li>
