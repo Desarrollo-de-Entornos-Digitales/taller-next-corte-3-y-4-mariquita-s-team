@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className'> & {
     label: string;
@@ -7,14 +7,19 @@ type PasswordFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | '
     inputClassName?: string;
 };
 
-export default function PasswordField({ label, helperText, inputClassName = '', ...props }: PasswordFieldProps) {
+export default function PasswordField({ label, helperText, inputClassName = '', id, ...props }: PasswordFieldProps) {
     const [showPassword, setShowPassword] = useState(false);
+    const generatedId = useId();
+    const inputId = id ?? generatedId;
 
     return (
         <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{label}</label>
+            <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-gray-700">
+                {label}
+            </label>
             <div className="relative">
                 <input
+                    id={inputId}
                     type={showPassword ? 'text' : 'password'}
                     className={`w-full rounded-md border border-gray-300 px-4 py-2 pr-14 text-sm outline-none focus:border-green-700 ${inputClassName}`.trim()}
                     {...props}

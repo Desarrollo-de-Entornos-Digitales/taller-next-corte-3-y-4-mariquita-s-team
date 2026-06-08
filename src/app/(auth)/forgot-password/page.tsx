@@ -5,10 +5,10 @@ import type { ComponentProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import Footer from '../../components/Footer';
-import AuthCard from '../../components/ui/AuthCard';
-import Button from '../../components/ui/Button';
-import TextField from '../../components/ui/TextField';
+import Footer from '../../../components/Footer';
+import AuthCard from '../../../components/ui/AuthCard';
+import Button from '../../../components/ui/Button';
+import TextField from '../../../components/ui/TextField';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
@@ -52,8 +52,8 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f3f3f3] text-gray-900">
-            <main className="flex min-h-[calc(100vh-80px)] w-full flex-col overflow-hidden bg-white shadow-sm lg:flex-row">
+        <div className="flex min-h-screen flex-col bg-[#f3f3f3] text-gray-900">
+            <main className="flex w-full flex-1 flex-col overflow-hidden bg-white shadow-sm lg:flex-row">
                 <section className="relative min-h-[360px] w-full lg:w-1/2">
                     <Image
                         src="/Vaca.png"
@@ -105,3 +105,4 @@ export default function ForgotPasswordPage() {
         </div>
     );
 }
+

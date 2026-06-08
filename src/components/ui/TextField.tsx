@@ -1,4 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
+import { useId } from 'react';
 
 type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> & {
     label: string;
@@ -7,11 +8,17 @@ type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> &
     inputClassName?: string;
 };
 
-export default function TextField({ label, helperText, errorText, inputClassName = '', ...props }: TextFieldProps) {
+export default function TextField({ label, helperText, errorText, inputClassName = '', id, ...props }: TextFieldProps) {
+    const generatedId = useId();
+    const inputId = id ?? generatedId;
+
     return (
         <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">{label}</label>
+            <label htmlFor={inputId} className="mb-1 block text-sm font-medium text-gray-700">
+                {label}
+            </label>
             <input
+                id={inputId}
                 className={`w-full rounded-md border border-gray-300 px-4 py-2 text-sm outline-none focus:border-green-700 ${inputClassName}`.trim()}
                 {...props}
             />
