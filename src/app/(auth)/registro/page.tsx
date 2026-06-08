@@ -6,14 +6,18 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import Footer from '../../components/Footer';
-import AuthCard from '../../components/ui/AuthCard';
-import Button from '../../components/ui/Button';
-import PasswordField from '../../components/ui/PasswordField';
-import TextField from '../../components/ui/TextField';
+import Footer from '../../../components/Footer';
+import AuthCard from '../../../components/ui/AuthCard';
+import Button from '../../../components/ui/Button';
+import PasswordField from '../../../components/ui/PasswordField';
+import TextField from '../../../components/ui/TextField';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 const DEFAULT_ROLE_ID = 2;
+
+function isStrongPassword(value: string) {
+    return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(value);
+}
 
 export default function RegistroPage() {
     const router = useRouter();
@@ -31,6 +35,11 @@ export default function RegistroPage() {
 
         if (password !== confirmPassword) {
             setFormError('Passwords do not match.');
+            return;
+        }
+
+        if (!isStrongPassword(password)) {
+            setFormError('Password must be at least 8 characters and include letters, numbers, and a symbol.');
             return;
         }
 
@@ -106,8 +115,8 @@ export default function RegistroPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#f3f3f3] text-gray-900">
-            <main className="flex min-h-[calc(100vh-80px)] w-full flex-col overflow-hidden bg-white shadow-sm lg:flex-row">
+        <div className="flex min-h-screen flex-col bg-[#f3f3f3] text-gray-900">
+            <main className="flex w-full flex-1 flex-col overflow-hidden bg-white shadow-sm lg:flex-row">
                 <section className="relative min-h-[360px] w-full lg:w-1/2">
                     <Image src="/Vaca.png" alt="Vaca en el campo" fill className="object-cover" priority />
                     <div className="absolute inset-0 bg-black/20" />
@@ -159,19 +168,19 @@ export default function RegistroPage() {
                                 placeholder="Enter your password"
                                 required
                                 minLength={8}
-                                pattern="^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$"
                                 value={password}
                                 onChange={(event) => setPassword(event.target.value)}
-                                helperText="It must be a combination of minimum 8 letters, numbers, and symbols."
+                                helperText="Mínimo 8 caracteres, con letras, números y un símbolo."
                             />
 
                             <PasswordField
                                 label="Confirm Password"
                                 placeholder="Enter your password"
                                 required
+                                minLength={8}
                                 value={confirmPassword}
                                 onChange={(event) => setConfirmPassword(event.target.value)}
-                                helperText="It must be the same password."
+                                helperText="Debe coincidir con la contraseña."
                             />
 
                             <label className="flex items-start gap-2 text-sm text-gray-600">
