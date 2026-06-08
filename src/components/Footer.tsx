@@ -1,33 +1,40 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-const footerLinks = [
-    { label: 'About Us', href: '#' },
-    { label: 'Terms', href: '#' },
-    { label: 'Privacy', href: '#' },
-    { label: 'Help', href: '#' },
+const helpLinks = [
+    { label: 'Help Center', href: '/help' },
+    { label: 'Getting Started', href: '/help/getting-started' },
+    { label: 'Buying', href: '/help/buying' },
+    { label: 'Selling', href: '/help/selling' },
+    { label: 'Contact', href: '/help/contact' },
 ];
 
 export default function Footer() {
+    const year = new Date().getFullYear();
+
     return (
-        <footer className="bg-[#204b32] px-6 py-4 text-white md:px-10">
-            <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center gap-4 md:flex-row md:justify-between">
-                <div className="flex items-center gap-3">
-                    <Image src="/LogoVin.png" alt="Logo VincoBov" width={46} height={46} priority />
-                    <span className="text-xl font-semibold leading-none md:text-2xl">VincoBov</span>
+        <footer className="bg-[#1a3d28] text-white">
+            <div className="mx-auto flex w-full max-w-[1400px] flex-col items-center gap-4 px-4 py-4 md:flex-row md:justify-between md:gap-6 md:px-6">
+                <div className="flex shrink-0 items-center gap-2">
+                    <Image src="/LogoVin.png" alt="Logo VincoBov" width={28} height={28} priority />
+                    <span className="text-sm font-semibold">VincoBov</span>
                 </div>
 
-                <nav className="flex flex-wrap items-center justify-center gap-6 text-xs font-semibold text-white/90 md:gap-8 md:text-sm">
-                    {footerLinks.map((item) => (
-                        <Link key={item.label} href={item.href} className="hover:text-white">
-                            {item.label}
-                        </Link>
+                <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
+                    {helpLinks.map((item, index) => (
+                        <span key={item.href} className="flex items-center">
+                            {index > 0 ? <span className="mx-2 text-white/20">·</span> : null}
+                            <Link
+                                href={item.href}
+                                className="text-xs text-white/75 transition hover:text-white sm:text-sm"
+                            >
+                                {item.label}
+                            </Link>
+                        </span>
                     ))}
                 </nav>
 
-                <p className="text-center text-[11px] text-white/85 md:text-xs">
-                    CompanyName @ 202X. All rights reserved.
-                </p>
+                <p className="shrink-0 text-center text-[10px] text-white/45 sm:text-xs">© {year} VincoBov</p>
             </div>
         </footer>
     );
