@@ -98,7 +98,40 @@ En el backend, la autorizacion se sustenta en guards JWT y validacion de permiso
 
 ### Gestion del estado
 
-La gestion del estado se implemento principalmente con React Hooks para controlar sesion, carga de productos, filtros, paginacion, estados de carga y manejo de errores. Como estrategia de persistencia, se utiliza `localStorage` para datos de sesion que deben conservarse entre recargas (por ejemplo, token e identidad basica), y `sessionStorage` para datos transitorios del onboarding que solo son necesarios durante el flujo de registro.
+La gestion del estado global se implementa con **Zustand** en dos dominios principales:
+
+- `useNotificationStore`: notificaciones toast (exito, error, info) sin `window.alert`.
+- `useSearchStore`: termino de busqueda compartido entre navbar y feed.
+
+La sesion y persistencia local se mantienen con `localStorage` (token, email, username, rol) y `sessionStorage` para onboarding.
+
+### Paginas y funcionalidades del frontend
+
+| Ruta | Descripcion |
+|------|-------------|
+| `/` | Feed con paginacion, filtros por categoria y busqueda |
+| `/login`, `/registro` | Autenticacion |
+| `/perfil` | Ver y editar perfil de usuario |
+| `/productos/[id]` | Detalle de producto |
+| `/productos/nuevo` | Publicar producto (rol seller) |
+| `/carrito` | Carrito de compras |
+| `/pago/simulado` | Checkout simulado en 5 pasos (desde carrito) |
+| `/pedidos/[id]/seguimiento` | Seguimiento de envío del pedido |
+| `/favoritos`, `/mensajes`, `/notificaciones` | Favoritos, chat y notificaciones |
+| `/help` | Centro de ayuda |
+
+### Pruebas E2E (Playwright)
+
+```bash
+npm run test:e2e
+```
+
+Variables utiles:
+
+- `PLAYWRIGHT_PORT=3003` (default)
+- `NEXT_PUBLIC_API_URL=http://localhost:3000` (backend Nest)
+
+Los tests de autenticacion y pago requieren backend levantado con seed cargado.
 
 ### Link de Figma
 
