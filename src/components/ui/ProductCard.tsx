@@ -1,4 +1,7 @@
 import Image from 'next/image';
+import Link from 'next/link';
+
+import { getCategoryLabel } from '../../lib/categories';
 
 type ProductCardProps = {
     id: number;
@@ -13,7 +16,7 @@ type ProductCardProps = {
 };
 
 function formatPrice(price: number) {
-    return new Intl.NumberFormat('es-CO', {
+    return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'COP',
         maximumFractionDigits: 0,
@@ -32,9 +35,11 @@ export default function ProductCard({
     onClick,
 }: ProductCardProps) {
     return (
-        <article
-            className="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:shadow-md"
+        <Link
+            href={`/productos/${id}`}
+            className="block overflow-hidden rounded-2xl border border-gray-200 bg-white transition hover:shadow-md"
             onClick={() => onClick?.(id)}
+            data-testid={`product-card-${id}`}
         >
             <div className="relative h-36 bg-[#d1d5db]">
                 {imageUrl ? (
@@ -51,11 +56,11 @@ export default function ProductCard({
                 <p className="mt-1 text-[28px] font-bold leading-none text-gray-900">{formatPrice(price)}</p>
                 <p className="mt-2 line-clamp-2 text-sm text-gray-500">{description}</p>
                 <div className="mt-3 space-y-0.5 text-sm text-gray-500">
-                    <p className="font-medium text-gray-700">{sellerName ?? 'Vendedor VincoBov'}</p>
+                    <p className="font-medium text-gray-700">{sellerName ?? 'VincoBov Seller'}</p>
                     <p>{location || 'Colombia'}</p>
-                    <p className="text-xs uppercase tracking-wide text-green-700">{category}</p>
+                    <p className="text-xs uppercase tracking-wide text-green-700">{getCategoryLabel(category)}</p>
                 </div>
             </div>
-        </article>
+        </Link>
     );
 }
