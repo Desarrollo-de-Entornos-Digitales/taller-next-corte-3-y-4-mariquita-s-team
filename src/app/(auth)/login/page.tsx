@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import type { ComponentProps } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -68,7 +68,7 @@ async function loginRequest(payload: LoginPayload): Promise<LoginResponse> {
     return body ?? {};
 }
 
-export default function LoginPage() {
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const pushNotification = useNotificationStore((state) => state.push);
@@ -221,5 +221,13 @@ export default function LoginPage() {
 
             <Footer />
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<p className="p-8 text-center text-sm text-gray-600">Loading login...</p>}>
+            <LoginContent />
+        </Suspense>
     );
 }
